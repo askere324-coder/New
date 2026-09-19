@@ -160,5 +160,36 @@ async function init(){
  await refreshPrompt();render();
 }
 window.AntiqueWardrobe={update,openPanel,closePanel};
-jQuery(()=>{if(window.SillyTavern?.getContext)init().catch(console.error);});
+async function init() {
+    if (initialized) return;
+    initialized = true;
+    settings();
+
+    const root = document.createElement('div');
+    root.id = 'antique-wardrobe-root';
+    document.body.appendChild(root);
+
+    const c = ctx();
+    lastChatLength = Array.isArray(c.chat) ? c.chat.length : 0;
+    const e = c.eventTypes || c.event_types || {};
+
+    c.eventSource?.on(e.MESSAGE_SENT || 'MESSAGE_SENT', onNewMessage);
+    c.eventSource?.on(e.MESSAGE_RECEIVED || 'MESSAGE_RECEIVED', onNewMessage);
+    c.eventSource?.on(e.CHAT_CHANGED || 'CHAT_CHANGED', async () => {
+        lastChatLength = Array.isArray(ctx().chat) ? ctx().chat.length : 0;
+        await refreshPrompt();
+        render();
+    });
+
+    await refreshPrompt();
+    render();
+}
+
+window.AntiqueWardrobe = { update, openPanel, closePanel, init };
+
+jQuery(() => {
+    if (window.SillyTavern?.getContext) {
+        init().catch(console.error);
+    }
+});
 })();
